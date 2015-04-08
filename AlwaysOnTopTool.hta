@@ -1,0 +1,135 @@
+<html><head>
+<title>KeepAliveTool</title>
+<style>
+.footer{
+	font-size: 12px; 
+}
+.comment{
+	font-size: 12px; 
+}
+</style>
+<script language="javascript">
+window.resizeTo(600,400);
+</script>
+</head>
+<body>
+
+<div/>起動コマンド
+<input type="text" name="LaunchCommand">
+
+<div>監視アプリ名
+<input type="text" name="ActivateTarget">
+<div class="comment"/>タイトルバーの文字列
+</div>
+
+<p>
+<div/><input type="button" value="起動テスト" onClick="Launch()">
+<div/><input type="button" value="監視停止" onClick="StopInterval()">
+
+<div><input type="checkbox" name="AutoLaunch">
+アプリ自動起動＆監視
+</div>
+
+<p class="footer">*windowクローズ時に値が保存されます</p>
+
+<script script="javascript">
+/*\
+ |*|
+ |*|  :: cookies.js ::
+ |*|
+ |*|  A complete cookies reader/writer framework with full unicode support.
+ |*|
+ |*|  https://developer.mozilla.org/en-US/docs/DOM/document.cookie
+ |*|
+ |*|  Syntaxes:
+ |*|
+ |*|  * docCookies.setItem(name, value[, end[, path[, domain[, secure]]]])
+ |*|  * docCookies.getItem(name)
+ |*|  * docCookies.removeItem(name[, path])
+ |*|  * docCookies.hasItem(name)
+ |*|  * docCookies.keys()
+ |*|
+ \*/
+var docCookies = {
+  getItem: function (sKey) {
+    if (!sKey || !this.hasItem(sKey)) { return null; }
+    return unescape(document.cookie.replace(new RegExp("(?:^|.*;\\s*)" + escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=\\s*((?:[^;](?!;))*[^;]?).*"), "$1"));
+  },
+  setItem: function (sKey, sValue, vEnd, sPath, sDomain, bSecure) {
+    if (!sKey || /^(?:expires|max\-age|path|domain|secure)$/i.test(sKey)) { return; }
+    var sExpires = "";
+    if (vEnd) {
+      switch (vEnd.constructor) {
+        case Number:
+          sExpires = vEnd === Infinity ? "; expires=Tue, 19 Jan 2038 03:14:07 GMT" : "; max-age=" + vEnd;
+          break;
+        case String:
+          sExpires = "; expires=" + vEnd;
+          break;
+        case Date:
+          sExpires = "; expires=" + vEnd.toGMTString();
+          break;
+      }
+    }
+    document.cookie = escape(sKey) + "=" + escape(sValue) + sExpires + (sDomain ? "; domain=" + sDomain : "") + (sPath ? "; path=" + sPath : "") + (bSecure ? "; secure" : "");
+  },
+  removeItem: function (sKey, sPath) {
+    if (!sKey || !this.hasItem(sKey)) { return; }
+    document.cookie = escape(sKey) + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT" + (sPath ? "; path=" + sPath : "");
+  },
+  hasItem: function (sKey) {
+    return (new RegExp("(?:^|;\\s*)" + escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=")).test(document.cookie);
+  },
+  keys: /* optional method: you can safely remove it! */ function () {
+    var aKeys = document.cookie.replace(/((?:^|\s*;)[^\=]+)(?=;|$)|^\s*|\s*(?:\=[^;]*)?(?:\1|$)/g, "").split(/\s*(?:\=[^;]*)?;\s*/);
+    for (var nIdx = 0; nIdx < aKeys.length; nIdx++) { aKeys[nIdx] = unescape(aKeys[nIdx]); }
+    return aKeys;
+  }
+};
+</script>
+
+<script language="javascript">
+LaunchCommand.value = docCookies.getItem("LaunchCommand");
+ActivateTarget.value = docCookies.getItem("ActivateTarget");
+AutoLaunch.checked = docCookies.getItem("AutoLaunch") === "true";
+
+var sh = new ActiveXObject("WScript.Shell");
+var interavalID = null;
+
+if ( AutoLaunch.checked )
+{
+	Launch();
+}
+
+function Launch()
+{
+	sh.Run(LaunchCommand.value);
+	AlwayOnTop();
+}
+
+function AlwayOnTop()
+{
+	interavalID = setInterval(function(){
+		var target = ActivateTarget.value;
+		if( target ){ 
+			sh.AppActivate(target);
+			sh.SendKeys("{Enter}");
+		}
+	}, 5000);
+}
+
+function StopInterval()
+{
+	clearInterval(interavalID);
+	interavalID = null;
+}
+
+window.onbeforeunload = function()
+{
+	docCookies.setItem("LaunchCommand", LaunchCommand.value, Infinity);
+	docCookies.setItem("ActivateTarget", ActivateTarget.value, Infinity);
+	docCookies.setItem("AutoLaunch", AutoLaunch.checked.toString(), Infinity);
+}
+</script>
+
+</html>
